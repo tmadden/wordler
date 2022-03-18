@@ -275,7 +275,7 @@ solving_ui(html::context ctx, readable<std::string> code)
             link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
                 .class_("text-primary");
             text(ctx, "-style puzzle!");
-        }).classes("mt-5");
+        }).classes("mt-3");
 
         window_event_handler(ctx, "keydown", [&](emscripten::val v) {
             write_signal(

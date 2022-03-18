@@ -16,7 +16,7 @@ puzzle_is_solved(puzzle_definition const& puzzle, puzzle_state const& state)
 bool
 out_of_guesses(puzzle_definition const& puzzle, puzzle_state const& state)
 {
-    return state.guesses.size() >= 6; // puzzle.max_guesses;
+    return state.guesses.size() >= puzzle.max_guesses;
 }
 
 // CEREAL INTERFACES - We use Cereal to convert our puzzle state to and from

@@ -67,9 +67,9 @@ make_letter_rows(puzzle_definition const& puzzle, puzzle_state const& state)
     std::vector<colorful_text> rows;
     for (auto const& guess : state.guesses)
         rows.push_back(color_guess(puzzle, guess));
-    if (rows.size() < 6)
+    if (rows.size() < puzzle.max_guesses)
         rows.push_back(color_active_guess(puzzle, state.active_guess));
-    while (rows.size() < 6)
+    while (rows.size() < puzzle.max_guesses)
         rows.push_back(empty_row(puzzle));
     return rows;
 }

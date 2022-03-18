@@ -57,7 +57,7 @@ puzzle_code_modal(html::context ctx, Modal& modal, readable<std::string> code)
 void
 creation_ui(html::context ctx)
 {
-    div(ctx, "col-6", [&] {
+    div(ctx, "col-12", [&] {
         p(ctx, [&] {
             text(ctx, "Create your own ");
             link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
@@ -65,52 +65,80 @@ creation_ui(html::context ctx)
             text(ctx, "-style puzzles!");
         }).classes("mt-5");
 
-        auto the_word = get_state(ctx, "");
-
-        auto word_is_letters = apply(ctx, is_alpha_only, the_word);
-        auto word_is_valid = word_is_letters && !is_empty(the_word);
-
         element(ctx, "form").content([&]() {
-            element(ctx, "fieldset").content([&] {
-                div(ctx, "form-group", [&]() {
-                    element(ctx, "fieldset").content([&] {
-                        label(ctx, "What's the word?")
-                            .classes("form-label mt-4")
-                            .attr("for", "the-word-input");
-                        input(ctx, the_word)
-                            .classes("form-control")
-                            .attr("id", "the-word-input")
-                            .attr("type", "text")
-                            .class_(mask("is-invalid", !word_is_letters));
-                        alia_if(!word_is_letters)
-                        {
-                            div(ctx, "invalid-feedback", [&] {
-                                text(ctx, "Letters only, please!");
-                            });
-                        }
-                        alia_end
-                    });
-                }).class_(mask("has-danger", !word_is_letters));
+            auto the_word = get_state(ctx, "");
 
+            auto word_is_letters = apply(ctx, is_alpha_only, the_word);
+            auto word_is_valid = word_is_letters && !is_empty(the_word);
+
+            div(ctx, "form-group", [&]() {
+                label(ctx, "What's the word?")
+                    .classes("form-label mt-4")
+                    .attr("for", "the-word-input");
+                input(ctx, the_word)
+                    .classes("form-control")
+                    .attr("id", "the-word-input")
+                    .attr("type", "text")
+                    .class_(mask("is-invalid", !word_is_letters));
+                alia_if(!word_is_letters)
                 {
-                    auto modal = bs::modal(ctx, [&](auto& modal) {
-                        auto code = apply(
-                            ctx,
-                            generate_puzzle_code,
-                            apply(
-                                ctx,
-                                ALIA_AGGREGATOR(puzzle_definition),
-                                the_word,
-                                value(false)));
-                        puzzle_code_modal(ctx, modal, code);
+                    div(ctx, "invalid-feedback", [&] {
+                        text(ctx, "Letters only, please!");
                     });
-                    modal.class_("fade");
-                    bs::primary_button(
-                        ctx,
-                        "Create",
-                        mask_action(actions::activate(modal), word_is_valid));
                 }
+                alia_end
             });
+
+            auto max_guesses = get_state(ctx, 6);
+
+            auto max_guesses_is_valid = max_guesses > 0 && max_guesses <= 100;
+
+            div(ctx, "form-group", [&]() {
+                label(ctx, "How many guesses do they get?")
+                    .classes("form-label mt-4")
+                    .attr("for", "the-word-input");
+                input(ctx, max_guesses)
+                    .classes("form-control")
+                    .attr("id", "the-word-input")
+                    .attr("type", "number")
+                    .class_(mask("is-invalid", !max_guesses_is_valid));
+                alia_if(max_guesses < 1)
+                {
+                    div(ctx, "invalid-feedback", [&] {
+                        text(ctx, "You need to allow at least one guess!");
+                    });
+                }
+                alia_else_if(max_guesses > 100)
+                {
+                    div(ctx, "invalid-feedback", [&] {
+                        text(ctx, "That's too many guesses!");
+                    });
+                }
+                alia_end
+            });
+
+            {
+                auto modal = bs::modal(ctx, [&](auto& modal) {
+                    auto code = apply(
+                        ctx,
+                        generate_puzzle_code,
+                        apply(
+                            ctx,
+                            ALIA_AGGREGATOR(puzzle_definition),
+                            the_word,
+                            max_guesses,
+                            value(false)));
+                    puzzle_code_modal(ctx, modal, code);
+                });
+                modal.class_("fade");
+                bs::primary_button(
+                    ctx,
+                    "Create",
+                    mask_action(
+                        actions::activate(modal),
+                        word_is_valid && max_guesses_is_valid))
+                    .class_("mt-3");
+            }
         });
     });
 }

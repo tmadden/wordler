@@ -6,6 +6,7 @@
 struct puzzle_definition
 {
     std::string the_word;
+    int max_guesses;
     bool disable_dict_warning;
 };
 

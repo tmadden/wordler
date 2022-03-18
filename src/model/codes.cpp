@@ -19,6 +19,7 @@ generate_puzzle_code(puzzle_definition const& puzzle)
     for (char& letter : the_word)
         letter = std::tolower(letter);
     stream << puzzle.the_word;
+    stream << char(puzzle.max_guesses);
     stream << char(puzzle.disable_dict_warning ? 1 : 0);
 
     return cppcodec::base64_url_unpadded::encode(stream.str());
@@ -47,8 +48,11 @@ parse_puzzle_code(std::string const& code)
         letter = std::tolower(letter);
     }
 
+    char max_guesses;
+    stream >> max_guesses;
+
     char disable_dict_warning;
     stream >> disable_dict_warning;
 
-    return puzzle_definition{the_word, disable_dict_warning != 0};
+    return puzzle_definition{the_word, max_guesses, disable_dict_warning != 0};
 }

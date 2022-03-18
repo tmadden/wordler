@@ -8,7 +8,8 @@ enum letter_color
     CORRECT,
     MISPLACED,
     INCORRECT,
-    CURSOR
+    CURSOR,
+    ERROR
 };
 
 struct colorful_letter

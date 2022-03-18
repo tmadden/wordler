@@ -14,6 +14,7 @@ struct puzzle_state
 {
     std::vector<std::string> guesses;
     std::string active_guess;
+    bool tried_an_invalid_word = false;
 };
 
 std::string

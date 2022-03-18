@@ -26,7 +26,7 @@ template<class Archive>
 void
 serialize(Archive& archive, puzzle_state& state)
 {
-    archive(state.guesses, state.active_guess);
+    archive(state.guesses, state.active_guess, state.tried_an_invalid_word);
 }
 
 std::string

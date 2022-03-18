@@ -5,6 +5,7 @@
 
 #include "model/codes.h"
 #include "model/coloring.h"
+#include "model/dictionaries.h"
 #include "model/puzzle.h"
 #include "ui/rgb.h"
 #include "ui/utilities.h"
@@ -39,9 +40,11 @@ letter_display(
 puzzle_state
 process_key_press(
     puzzle_definition const& puzzle,
+    dictionary const& dict,
     puzzle_state state,
     std::string const& key)
 {
+    state.tried_an_invalid_word = false;
     if (key.length() == 1 && isalpha(key[0]))
     {
         if (state.active_guess.length() < puzzle.the_word.length())
@@ -51,8 +54,16 @@ process_key_press(
     {
         if (state.active_guess.length() == puzzle.the_word.length())
         {
-            state.guesses.push_back(state.active_guess);
-            state.active_guess.clear();
+            if (state.active_guess == puzzle.the_word
+                || dictionary_contains(dict, state.active_guess))
+            {
+                state.guesses.push_back(state.active_guess);
+                state.active_guess.clear();
+            }
+            else
+            {
+                state.tried_an_invalid_word = true;
+            }
         }
     }
     else if (key == "Backspace")
@@ -73,8 +84,9 @@ letter_row(
         = {rgb8(0xec, 0xf0, 0xf1),
            rgb8(0x4b, 0xdf, 0x8b),
            rgb8(0xff, 0xe3, 0x56),
-           rgb8(0xec, 0xf0, 0xf1),
-           rgb8(0xba, 0xc5, 0xc5)};
+           rgb8(0xd5, 0xdc, 0xdd),
+           rgb8(0xba, 0xc5, 0xc5),
+           rgb8(0xef, 0x8b, 0x81)};
 
     div(ctx, "d-flex flex-row", [&] {
         for_each(ctx, row, [&](auto letter) {
@@ -108,6 +120,8 @@ solving_ui(html::context ctx, readable<std::string> code)
     auto state
         = add_default(native_state, default_initialized<puzzle_state>());
 
+    auto dict = fetch_dictionary(ctx, size(alia_field(puzzle, the_word)));
+
     div(ctx, "col-12", [&] {
         p(ctx, [&] {
             text(ctx, "Someone has sent you a bespoke ");
@@ -121,6 +135,7 @@ solving_ui(html::context ctx, readable<std::string> code)
                 state,
                 process_key_press(
                     read_signal(puzzle),
+                    read_signal(dict),
                     read_signal(state),
                     v["key"].as<std::string>()));
         });

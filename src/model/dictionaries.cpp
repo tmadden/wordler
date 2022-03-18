@@ -1,5 +1,7 @@
 #include "dictionaries.h"
 
+#include <emscripten/val.h>
+
 #include <alia/html/fetch.hpp>
 
 using namespace alia;
@@ -11,7 +13,9 @@ make_dictionary_request(size_t word_length)
 {
     return html::http_request{
         html::http_method::GET,
-        "/words/" + std::to_string(word_length) + ".txt",
+        emscripten::val::global("window")["location"]["pathname"]
+                .as<std::string>()
+            + "words/" + std::to_string(word_length) + ".txt",
         html::http_headers(),
         html::blob()};
 }

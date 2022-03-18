@@ -29,8 +29,15 @@ puzzle_code_modal(html::context ctx, Modal& modal, readable<std::string> code)
 
     auto url = "https://tmadden.github.io/wordler/#/puzzle/" + code;
 
-    modal.body(
-        [&] { link(ctx, url, url).attr("style", "word-break: break-all;"); });
+    modal.body([&] {
+        return element(ctx, "a")
+            .attr("href", url)
+            .text(url)
+            .on("click", (actions::close(modal), callback([&]() {
+                              emscripten::val::global("window").set(
+                                  "location", read_signal(url));
+                          })));
+    });
 
     modal.footer([&] {
         auto copied = get_transient_state(ctx, false);

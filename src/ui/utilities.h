@@ -7,6 +7,8 @@
 
 using namespace alia;
 
+// Candidate code for incorporation into alia/HTML...
+
 void
 copy_to_clipboard(std::string const& text);
 
@@ -38,3 +40,13 @@ window_event_handler(
             std::forward<Handler>(handler)(e.event);
         });
 }
+
+html::storage_signal
+get_storage_state(
+    html::context ctx, char const* storage_name, readable<std::string> key);
+
+html::storage_signal
+get_session_state(html::context ctx, readable<std::string> key);
+
+html::storage_signal
+get_local_state(html::context ctx, readable<std::string> key);

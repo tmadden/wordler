@@ -96,7 +96,17 @@ solving_ui(html::context ctx, readable<std::string> code)
 {
     auto puzzle = apply(ctx, parse_puzzle_code, code);
 
-    auto state = get_state(ctx, default_initialized<puzzle_state>());
+    // Construct the signal for our puzzle state...
+    // First, create a binding to the raw, JSON state in local storage.
+    auto json_state = get_local_state(ctx, code);
+    // Pass that through a two-way serializer/deserializer to convert it to our
+    // native C++ representation.
+    auto native_state = duplex_apply(
+        ctx, json_to_puzzle_state, puzzle_state_to_json, json_state);
+    // And finally, add a default value (of default-initialized state) for when
+    // the raw JSON doesn't exist yet.
+    auto state
+        = add_default(native_state, default_initialized<puzzle_state>());
 
     p(ctx, [&] {
         text(ctx, "Someone has sent you a bespoke ");

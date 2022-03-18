@@ -1,13 +1,12 @@
 cmake_minimum_required (VERSION 3.14)
-project(alia-html-starter)
+project(wordler)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Add alia-html.
+# Add dependencies.
 include(cmake/alia-html.cmake)
-
-# Add the nlohmann/json library if you want to use it for REST queries.
-# include(cmake/json.cmake)
+include(cmake/cppcodec.cmake)
+include(cmake/cereal.cmake)
 
 # Create a subdirectory in the build dir that we'll use to accumulate all the
 # files that need to be deployed to the web.
@@ -22,10 +21,22 @@ alia_deploy(
     "${CMAKE_CURRENT_SOURCE_DIR}/src/style.css"
     "${deploy_dir}")
 
+# Deploy all the word files.
+file(GLOB word_files "words/*")
+file(MAKE_DIRECTORY "${deploy_dir}/words")
+foreach(word_file ${word_files})
+    alia_deploy(
+        "${word_file}"
+        "${deploy_dir}/words")
+endforeach()
+
 # Add the main app.
-file(GLOB source_files "src/*.cpp")
+file(GLOB_RECURSE source_files "src/*.cpp")
 add_executable(app ${source_files})
 target_link_libraries(app alia_html)
+target_include_directories(app PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${cereal_SOURCE_DIR}/include)
 set_target_properties(app PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${deploy_dir})
 

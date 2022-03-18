@@ -10,3 +10,19 @@ p {
 b {
     font-weight: bold;
 }
+
+.letter {
+    width: 60px;
+    height: 90px;
+
+    margin: 3px;
+
+    overflow: hidden;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-family: 'Roboto', sans-serif;
+    font-size: 40px;
+}

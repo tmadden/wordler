@@ -74,20 +74,20 @@ process_key_press(
     return state;
 }
 
+static rgb8 const palette[]
+    = {rgb8(0xec, 0xf0, 0xf1),
+       rgb8(0xaf, 0xd4, 0xec),
+       rgb8(0xef, 0x8b, 0x81),
+       rgb8(0xba, 0xc5, 0xc5),
+       rgb8(0xff, 0xe3, 0x56),
+       rgb8(0x4b, 0xdf, 0x8b)};
+
 void
 letter_row(
     html::context ctx,
     readable<puzzle_definition> puzzle,
     readable<colorful_text> row)
 {
-    static rgb8 const palette[]
-        = {rgb8(0xec, 0xf0, 0xf1),
-           rgb8(0x4b, 0xdf, 0x8b),
-           rgb8(0xff, 0xe3, 0x56),
-           rgb8(0xd5, 0xdc, 0xdd),
-           rgb8(0xba, 0xc5, 0xc5),
-           rgb8(0xef, 0x8b, 0x81)};
-
     div(ctx, "d-flex flex-row", [&] {
         for_each(ctx, row, [&](auto letter) {
             letter_display(
@@ -99,6 +99,153 @@ letter_row(
                         alia_field(letter, color)),
                     animated_transition{ease_in_out_curve, 400}),
                 alia_field(letter, letter));
+        });
+    });
+}
+
+letter_color
+extract_key_color(std::vector<colorful_text> const& letter_rows, char letter)
+{
+    letter_color color = NEUTRAL;
+    for (auto const& row : letter_rows)
+    {
+        for (auto const& cl : row)
+        {
+            if (cl.letter == letter && cl.color > color)
+                color = cl.color;
+        }
+    }
+    return color;
+}
+
+void
+letter_key(
+    html::context ctx,
+    readable<puzzle_definition> puzzle,
+    readable<dictionary> dict,
+    duplex<puzzle_state> state,
+    readable<std::vector<colorful_text>> letter_rows,
+    char letter)
+{
+    auto color = lazy_apply(
+        [](auto color) { return palette[color]; },
+        apply(ctx, extract_key_color, letter_rows, value(letter)));
+
+    element(ctx, "div")
+        .classes("key")
+        .attr(
+            "style",
+            printf(
+                ctx,
+                "background-color: #%02x%02x%02x",
+                alia_field(color, r),
+                alia_field(color, g),
+                alia_field(color, b)))
+        .content([&]() {
+            span(ctx)
+                .text(lazy_apply(
+                    [](char c) { return std::string(1, std::toupper(c)); },
+                    value(letter)))
+                .classes("user-select-none");
+        })
+        .handler("click", [&](emscripten::val v) {
+            write_signal(
+                state,
+                process_key_press(
+                    read_signal(puzzle),
+                    read_signal(dict),
+                    read_signal(state),
+                    std::string(1, letter)));
+        });
+}
+
+void
+keyboard_ui(
+    html::context ctx,
+    readable<puzzle_definition> puzzle,
+    readable<dictionary> dict,
+    duplex<puzzle_state> state,
+    readable<std::vector<colorful_text>> letter_rows)
+{
+    auto do_letter = [&](char letter) {
+        letter_key(ctx, puzzle, dict, state, letter_rows, letter);
+    };
+
+    div(ctx, "d-flex flex-column", [&] {
+        div(ctx, "d-flex flex-row", [&] {
+            do_letter('q');
+            do_letter('w');
+            do_letter('e');
+            do_letter('r');
+            do_letter('t');
+            do_letter('y');
+            do_letter('u');
+            do_letter('i');
+            do_letter('o');
+            do_letter('p');
+        });
+        div(ctx, "d-flex flex-row", [&] {
+            do_letter('a');
+            do_letter('s');
+            do_letter('d');
+            do_letter('f');
+            do_letter('g');
+            do_letter('h');
+            do_letter('j');
+            do_letter('k');
+            do_letter('l');
+        });
+        div(ctx, "d-flex flex-row", [&] {
+            element(ctx, "div")
+                .classes("key")
+                .attr(
+                    "style",
+                    printf(
+                        ctx,
+                        "background-color: #%02x%02x%02x",
+                        value(palette[NEUTRAL].r),
+                        value(palette[NEUTRAL].g),
+                        value(palette[NEUTRAL].b)))
+                .content([&]() { i(ctx).classes("fa-solid fa-delete-left"); })
+                .handler("click", [&](emscripten::val v) {
+                    write_signal(
+                        state,
+                        process_key_press(
+                            read_signal(puzzle),
+                            read_signal(dict),
+                            read_signal(state),
+                            "Backspace"));
+                });
+
+            do_letter('z');
+            do_letter('x');
+            do_letter('c');
+            do_letter('v');
+            do_letter('b');
+            do_letter('n');
+            do_letter('m');
+
+            element(ctx, "div")
+                .classes("key")
+                .attr(
+                    "style",
+                    printf(
+                        ctx,
+                        "background-color: #%02x%02x%02x",
+                        value(palette[NEUTRAL].r),
+                        value(palette[NEUTRAL].g),
+                        value(palette[NEUTRAL].b)))
+                .content(
+                    [&]() { i(ctx).classes("fa-solid fa-right-to-bracket"); })
+                .handler("click", [&](emscripten::val v) {
+                    write_signal(
+                        state,
+                        process_key_press(
+                            read_signal(puzzle),
+                            read_signal(dict),
+                            read_signal(state),
+                            "Enter"));
+                });
         });
     });
 }
@@ -140,11 +287,14 @@ solving_ui(html::context ctx, readable<std::string> code)
                     v["key"].as<std::string>()));
         });
 
+        auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
+
         div(ctx, "d-flex flex-column", [&] {
-            auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
             for_each(ctx, letter_rows, [&](auto row) {
                 letter_row(ctx, puzzle, row);
             });
         });
+
+        keyboard_ui(ctx, puzzle, dict, state, letter_rows);
     });
 }

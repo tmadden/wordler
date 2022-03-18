@@ -5,11 +5,11 @@
 enum letter_color
 {
     NEUTRAL,
-    CORRECT,
-    MISPLACED,
-    INCORRECT,
     CURSOR,
-    ERROR
+    ERROR,
+    INCORRECT,
+    MISPLACED,
+    CORRECT
 };
 
 struct colorful_letter

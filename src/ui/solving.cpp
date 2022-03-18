@@ -108,25 +108,28 @@ solving_ui(html::context ctx, readable<std::string> code)
     auto state
         = add_default(native_state, default_initialized<puzzle_state>());
 
-    p(ctx, [&] {
-        text(ctx, "Someone has sent you a bespoke ");
-        link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
-            .class_("text-primary");
-        text(ctx, "-style puzzle!");
-    }).classes("mt-5");
+    div(ctx, "col-12", [&] {
+        p(ctx, [&] {
+            text(ctx, "Someone has sent you a bespoke ");
+            link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
+                .class_("text-primary");
+            text(ctx, "-style puzzle!");
+        }).classes("mt-5");
 
-    window_event_handler(ctx, "keydown", [&](emscripten::val v) {
-        write_signal(
-            state,
-            process_key_press(
-                read_signal(puzzle),
-                read_signal(state),
-                v["key"].as<std::string>()));
-    });
+        window_event_handler(ctx, "keydown", [&](emscripten::val v) {
+            write_signal(
+                state,
+                process_key_press(
+                    read_signal(puzzle),
+                    read_signal(state),
+                    v["key"].as<std::string>()));
+        });
 
-    div(ctx, "d-flex flex-column", [&] {
-        auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
-        for_each(
-            ctx, letter_rows, [&](auto row) { letter_row(ctx, puzzle, row); });
+        div(ctx, "d-flex flex-column", [&] {
+            auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
+            for_each(ctx, letter_rows, [&](auto row) {
+                letter_row(ctx, puzzle, row);
+            });
+        });
     });
 }

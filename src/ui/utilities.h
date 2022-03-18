@@ -50,3 +50,57 @@ get_session_state(html::context ctx, readable<std::string> key);
 
 html::storage_signal
 get_local_state(html::context ctx, readable<std::string> key);
+
+// Candidate code for incorporation into alia...
+
+// mask(a, s), where :a is an action and :s is a signal, returns an equivalent
+// action that's only ready if :a is ready and :s has a value that evaluates to
+// :true.
+//
+template<class Wrapped, class ReadinessMask, class Action>
+struct action_masking_adaptor;
+
+template<class Wrapped, class ReadinessMask, class... Args>
+struct action_masking_adaptor<
+    Wrapped,
+    ReadinessMask,
+    action_interface<Args...>> :
+    // TODO: Why doesn't this work?
+    // typename Wrapped::action_type
+    action_interface<>
+{
+    action_masking_adaptor(Wrapped wrapped, ReadinessMask mask)
+        : wrapped_(std::move(wrapped)), mask_(std::move(mask))
+    {
+    }
+
+    bool
+    is_ready() const override
+    {
+        return wrapped_.is_ready() && signal_has_value(mask_)
+               && read_signal(mask_);
+    }
+
+    void
+    perform(
+        function_view<void()> const& intermediary, Args... args) const override
+    {
+        wrapped_.perform(intermediary, std::move(args)...);
+    }
+
+ private:
+    Wrapped wrapped_;
+    ReadinessMask mask_;
+};
+
+template<class Wrapped, class ReadinessMask>
+auto
+mask_action(Wrapped wrapped, ReadinessMask readiness_mask)
+{
+    return action_masking_adaptor<
+        Wrapped,
+        ReadinessMask,
+        // TODO: Why doesn't this work?
+        // typename Wrapped::action_type
+        action_interface<>>(std::move(wrapped), std::move(readiness_mask));
+}

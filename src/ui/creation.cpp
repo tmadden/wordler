@@ -57,43 +57,60 @@ puzzle_code_modal(html::context ctx, Modal& modal, readable<std::string> code)
 void
 creation_ui(html::context ctx)
 {
-    p(ctx, [&] {
-        text(ctx, "Create your own ");
-        link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
-            .class_("text-primary");
-        text(ctx, "-style puzzles!");
-    }).classes("mt-5");
+    div(ctx, "col-6", [&] {
+        p(ctx, [&] {
+            text(ctx, "Create your own ");
+            link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
+                .class_("text-primary");
+            text(ctx, "-style puzzles!");
+        }).classes("mt-5");
 
-    auto word = get_state(ctx, "");
-    input(ctx, word);
+        auto the_word = get_state(ctx, "");
 
-    auto words = fetch_dictionary(ctx, size(word));
-    p(ctx, printf(ctx, "%i words of that length %i", size(words), size(word)));
-    alia_if(lazy_apply(dictionary_contains, words, word))
-    {
-        p(ctx, "That word is in the dictionary!");
-    }
-    alia_end
+        auto word_is_letters = apply(ctx, is_alpha_only, the_word);
+        auto word_is_valid = word_is_letters && !is_empty(the_word);
 
-    alia_if(!apply(ctx, is_alpha_only, word))
-    {
-        p(ctx, "Letters only, please!");
-    }
-    alia_else_if(!is_empty(word))
-    {
-        auto modal = bs::modal(ctx, [&](auto& modal) {
-            auto code = apply(
-                ctx,
-                generate_puzzle_code,
-                apply(
-                    ctx,
-                    ALIA_AGGREGATOR(puzzle_definition),
-                    word,
-                    value(false)));
-            puzzle_code_modal(ctx, modal, code);
+        element(ctx, "form").content([&]() {
+            element(ctx, "fieldset").content([&] {
+                div(ctx, "form-group", [&]() {
+                    element(ctx, "fieldset").content([&] {
+                        label(ctx, "What's the word?")
+                            .classes("form-label mt-4")
+                            .attr("for", "the-word-input");
+                        input(ctx, the_word)
+                            .classes("form-control")
+                            .attr("id", "the-word-input")
+                            .attr("type", "text")
+                            .class_(mask("is-invalid", !word_is_letters));
+                        alia_if(!word_is_letters)
+                        {
+                            div(ctx, "invalid-feedback", [&] {
+                                text(ctx, "Letters only, please!");
+                            });
+                        }
+                        alia_end
+                    });
+                }).class_(mask("has-danger", !word_is_letters));
+
+                {
+                    auto modal = bs::modal(ctx, [&](auto& modal) {
+                        auto code = apply(
+                            ctx,
+                            generate_puzzle_code,
+                            apply(
+                                ctx,
+                                ALIA_AGGREGATOR(puzzle_definition),
+                                the_word,
+                                value(false)));
+                        puzzle_code_modal(ctx, modal, code);
+                    });
+                    modal.class_("fade");
+                    bs::primary_button(
+                        ctx,
+                        "Create",
+                        mask_action(actions::activate(modal), word_is_valid));
+                }
+            });
         });
-        modal.class_("fade");
-        bs::primary_button(ctx, "Create", actions::activate(modal));
-    }
-    alia_end
+    });
 }

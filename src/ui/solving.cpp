@@ -78,7 +78,7 @@ static rgb8 const palette[]
     = {rgb8(0xec, 0xf0, 0xf1),
        rgb8(0xaf, 0xd4, 0xec),
        rgb8(0xef, 0x8b, 0x81),
-       rgb8(0xba, 0xc5, 0xc5),
+       rgb8(0x90, 0x9D, 0x9E),
        rgb8(0xff, 0xe3, 0x56),
        rgb8(0x4b, 0xdf, 0x8b)};
 
@@ -88,7 +88,7 @@ letter_row(
     readable<puzzle_definition> puzzle,
     readable<colorful_text> row)
 {
-    div(ctx, "d-flex flex-row", [&] {
+    div(ctx, "letter-row", [&] {
         for_each(ctx, row, [&](auto letter) {
             letter_display(
                 ctx,
@@ -171,8 +171,8 @@ keyboard_ui(
         letter_key(ctx, puzzle, dict, state, letter_rows, letter);
     };
 
-    div(ctx, "d-flex flex-column", [&] {
-        div(ctx, "d-flex flex-row", [&] {
+    div(ctx, "keyboard", [&] {
+        div(ctx, "keyboard-row", [&] {
             do_letter('q');
             do_letter('w');
             do_letter('e');
@@ -184,7 +184,7 @@ keyboard_ui(
             do_letter('o');
             do_letter('p');
         });
-        div(ctx, "d-flex flex-row", [&] {
+        div(ctx, "keyboard-row", [&] {
             do_letter('a');
             do_letter('s');
             do_letter('d');
@@ -195,7 +195,7 @@ keyboard_ui(
             do_letter('k');
             do_letter('l');
         });
-        div(ctx, "d-flex flex-row", [&] {
+        div(ctx, "keyboard-row", [&] {
             element(ctx, "div")
                 .classes("key")
                 .attr(
@@ -206,7 +206,11 @@ keyboard_ui(
                         value(palette[NEUTRAL].r),
                         value(palette[NEUTRAL].g),
                         value(palette[NEUTRAL].b)))
-                .content([&]() { i(ctx).classes("fa-solid fa-delete-left"); })
+                .content([&]() {
+                    span(ctx)
+                        .classes("material-icons user-select-none")
+                        .text("backspace");
+                })
                 .handler("click", [&](emscripten::val v) {
                     write_signal(
                         state,
@@ -235,8 +239,11 @@ keyboard_ui(
                         value(palette[NEUTRAL].r),
                         value(palette[NEUTRAL].g),
                         value(palette[NEUTRAL].b)))
-                .content(
-                    [&]() { i(ctx).classes("fa-solid fa-right-to-bracket"); })
+                .content([&]() {
+                    span(ctx)
+                        .classes("material-icons-outlined user-select-none")
+                        .text("keyboard_return");
+                })
                 .handler("click", [&](emscripten::val v) {
                     write_signal(
                         state,
@@ -269,32 +276,29 @@ solving_ui(html::context ctx, readable<std::string> code)
 
     auto dict = fetch_dictionary(ctx, size(alia_field(puzzle, the_word)));
 
-    div(ctx, "col-12", [&] {
-        p(ctx, [&] {
-            text(ctx, "Someone has sent you a bespoke ");
-            link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
-                .class_("text-primary");
-            text(ctx, "-style puzzle!");
-        }).classes("mt-3");
+    auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
 
-        window_event_handler(ctx, "keydown", [&](emscripten::val v) {
-            write_signal(
-                state,
-                process_key_press(
-                    read_signal(puzzle),
-                    read_signal(dict),
-                    read_signal(state),
-                    v["key"].as<std::string>()));
-        });
+    div(ctx, "container", [&] {
+        div(ctx, "row", [&] {
+            div(ctx, "col-12", [&] {
+                window_event_handler(ctx, "keydown", [&](emscripten::val v) {
+                    write_signal(
+                        state,
+                        process_key_press(
+                            read_signal(puzzle),
+                            read_signal(dict),
+                            read_signal(state),
+                            v["key"].as<std::string>()));
+                });
 
-        auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
-
-        div(ctx, "d-flex flex-column", [&] {
-            for_each(ctx, letter_rows, [&](auto row) {
-                letter_row(ctx, puzzle, row);
+                div(ctx, "letter-panel", [&] {
+                    for_each(ctx, letter_rows, [&](auto row) {
+                        letter_row(ctx, puzzle, row);
+                    });
+                });
             });
         });
-
-        keyboard_ui(ctx, puzzle, dict, state, letter_rows);
     });
+
+    keyboard_ui(ctx, puzzle, dict, state, letter_rows);
 }

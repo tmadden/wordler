@@ -33,11 +33,11 @@ parse_puzzle_code(std::string const& code)
         reinterpret_cast<char const*>(bits.data()),
         std::ios_base::in | std::ios_base::binary);
 
-    unsigned char version;
-    stream >> version;
+    char version;
+    stream.read(&version, 1);
 
-    unsigned char word_length;
-    stream >> word_length;
+    char word_length;
+    stream.read(&word_length, 1);
     std::string the_word(size_t(word_length), ' ');
     stream.read(&the_word[0], size_t(word_length));
     // Sanitize.
@@ -49,10 +49,10 @@ parse_puzzle_code(std::string const& code)
     }
 
     char max_guesses;
-    stream >> max_guesses;
+    stream.read(&max_guesses, 1);
 
     char disable_dict_warning;
-    stream >> disable_dict_warning;
+    stream.read(&disable_dict_warning, 1);
 
     return puzzle_definition{the_word, max_guesses, disable_dict_warning != 0};
 }

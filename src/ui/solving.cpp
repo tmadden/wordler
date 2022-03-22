@@ -142,11 +142,13 @@ letter_key(
                 alia_field(color, g),
                 alia_field(color, b)))
         .content([&]() {
-            span(ctx)
-                .text(lazy_apply(
-                    [](char c) { return std::string(1, std::toupper(c)); },
-                    value(letter)))
-                .classes("user-select-none");
+            div(ctx, "key-content", [&] {
+                span(ctx)
+                    .text(lazy_apply(
+                        [](char c) { return std::string(1, std::toupper(c)); },
+                        value(letter)))
+                    .classes("user-select-none");
+            });
         })
         .handler("click", [&](emscripten::val v) {
             write_signal(
@@ -207,9 +209,11 @@ keyboard_ui(
                         value(palette[NEUTRAL].g),
                         value(palette[NEUTRAL].b)))
                 .content([&]() {
-                    span(ctx)
-                        .classes("material-icons user-select-none")
-                        .text("backspace");
+                    div(ctx, "key-content", [&] {
+                        span(ctx)
+                            .classes("material-icons user-select-none")
+                            .text("backspace");
+                    });
                 })
                 .handler("click", [&](emscripten::val v) {
                     write_signal(
@@ -240,9 +244,12 @@ keyboard_ui(
                         value(palette[NEUTRAL].g),
                         value(palette[NEUTRAL].b)))
                 .content([&]() {
-                    span(ctx)
-                        .classes("material-icons-outlined user-select-none")
-                        .text("keyboard_return");
+                    div(ctx, "key-content", [&] {
+                        span(ctx)
+                            .classes(
+                                "material-icons-outlined user-select-none")
+                            .text("keyboard_return");
+                    });
                 })
                 .handler("click", [&](emscripten::val v) {
                     write_signal(
@@ -300,5 +307,9 @@ solving_ui(html::context ctx, readable<std::string> code)
         });
     });
 
-    keyboard_ui(ctx, puzzle, dict, state, letter_rows);
+    div(ctx, "footer", [&] {
+        div(ctx, "container", [&] {
+            keyboard_ui(ctx, puzzle, dict, state, letter_rows);
+        });
+    });
 }

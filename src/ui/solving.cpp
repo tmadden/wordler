@@ -1,6 +1,7 @@
 #include <alia/html.hpp>
 #include <alia/html/bootstrap.hpp>
 
+#include <algorithm>
 #include <cctype>
 
 #include "model/codes.h"
@@ -16,7 +17,10 @@ namespace bs = alia::html::bootstrap;
 
 void
 letter_display(
-    html::context ctx, readable<rgb8> color, readable<char> character)
+    html::context ctx,
+    readable<double> scale,
+    readable<rgb8> color,
+    readable<char> character)
 {
     element(ctx, "div")
         .classes("letter")
@@ -24,16 +28,24 @@ letter_display(
             "style",
             printf(
                 ctx,
+                "font-size: min(%fvw, 60px); "
+                "width: %f%%; "
+                "padding-bottom: %f%%; "
                 "background-color: #%02x%02x%02x",
+                scale * 8,
+                scale * 20,
+                scale * 20,
                 alia_field(color, r),
                 alia_field(color, g),
                 alia_field(color, b)))
         .content([&]() {
-            span(ctx)
-                .text(lazy_apply(
-                    [](char c) { return std::string(1, std::toupper(c)); },
-                    character))
-                .classes("user-select-none");
+            div(ctx, "letter-content", [&] {
+                span(ctx)
+                    .text(lazy_apply(
+                        [](char c) { return std::string(1, std::toupper(c)); },
+                        character))
+                    .classes("user-select-none");
+            });
         });
 }
 
@@ -92,6 +104,13 @@ letter_row(
         for_each(ctx, row, [&](auto letter) {
             letter_display(
                 ctx,
+                apply(
+                    ctx,
+                    [](puzzle_definition const& puzzle) {
+                        size_t word_length = puzzle.the_word.length();
+                        return 5.0 / std::max(word_length, size_t(5));
+                    },
+                    puzzle),
                 smooth(
                     ctx,
                     lazy_apply(
@@ -285,7 +304,7 @@ solving_ui(html::context ctx, readable<std::string> code)
 
     auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
 
-    div(ctx, "container", [&] {
+    div(ctx, "container-lg", [&] {
         div(ctx, "row", [&] {
             div(ctx, "col-12", [&] {
                 window_event_handler(ctx, "keydown", [&](emscripten::val v) {

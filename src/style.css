@@ -21,7 +21,7 @@ b {
     display: flex;
     flex-direction: column;
     justify-content: top;
-    align-items: center;
+    align-items: stretch;
 }
 
 .letter-row {
@@ -32,19 +32,23 @@ b {
 }
 
 .letter {
-    width: 60px;
-    height: 60px;
+    position: relative;
+
+    margin: 3px;
+
+    font-family: 'Roboto', sans-serif;
+}
+
+.letter-content {
+    position: absolute;
+    overflow: hidden;
+
+    height: 100%;
+    width: 100%;
 
     display: flex;
     justify-content: center;
     align-items: center;
-
-    margin: 3px;
-
-    overflow: hidden;
-
-    font-family: 'Roboto', sans-serif;
-    font-size: 4vw;
 }
 
 .footer {
@@ -91,5 +95,5 @@ b {
     overflow: hidden;
 
     font-family: 'Roboto', sans-serif;
-    font-size: 3.5vw;
+    font-size: min(3.5vw, 60px);
 }

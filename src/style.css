@@ -16,7 +16,9 @@ b {
 }
 
 .letter-panel {
-    margin-top: 10px;
+    margin: 10px auto;
+
+    max-width: 800px;
 
     display: flex;
     flex-direction: column;
@@ -61,6 +63,10 @@ b {
     background: rgba(255, 255, 255, 0.75);
     padding: 3px;
 
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -95,5 +101,5 @@ b {
     overflow: hidden;
 
     font-family: 'Roboto', sans-serif;
-    font-size: min(3.5vw, 60px);
+    font-size: min(3.5vw, 42px);
 }

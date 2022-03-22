@@ -28,7 +28,7 @@ letter_display(
             "style",
             printf(
                 ctx,
-                "font-size: min(%fvw, 60px); "
+                "font-size: min(%fvw, 42px); "
                 "width: %f%%; "
                 "padding-bottom: %f%%; "
                 "background-color: #%02x%02x%02x",

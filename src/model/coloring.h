@@ -1,5 +1,7 @@
 #pragma once
 
+#include <compare>
+
 #include "model/puzzle.h"
 
 enum letter_color

@@ -226,8 +226,9 @@ keyboard_ui(
                 .content([&]() {
                     div(ctx, "key-content", [&] {
                         span(ctx)
-                            .classes("material-icons user-select-none")
-                            .text("backspace");
+                            .classes(
+                                "material-icons-outlined user-select-none")
+                            .text("keyboard_return");
                     });
                 })
                 .handler("click", [&](emscripten::val v) {
@@ -237,7 +238,7 @@ keyboard_ui(
                             read_signal(puzzle),
                             read_signal(dict),
                             read_signal(state),
-                            "Backspace"));
+                            "Enter"));
                 });
 
             do_letter('z');
@@ -261,9 +262,8 @@ keyboard_ui(
                 .content([&]() {
                     div(ctx, "key-content", [&] {
                         span(ctx)
-                            .classes(
-                                "material-icons-outlined user-select-none")
-                            .text("keyboard_return");
+                            .classes("material-icons user-select-none")
+                            .text("backspace");
                     });
                 })
                 .handler("click", [&](emscripten::val v) {
@@ -273,7 +273,7 @@ keyboard_ui(
                             read_signal(puzzle),
                             read_signal(dict),
                             read_signal(state),
-                            "Enter"));
+                            "Backspace"));
                 });
         });
     });

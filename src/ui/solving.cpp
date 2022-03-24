@@ -22,31 +22,27 @@ letter_display(
     readable<rgb8> color,
     readable<char> character)
 {
-    element(ctx, "div")
-        .classes("letter")
-        .attr(
-            "style",
-            printf(
-                ctx,
-                "font-size: min(%fvw, 42px); "
-                "width: %f%%; "
-                "padding-bottom: %f%%; "
-                "background-color: #%02x%02x%02x",
-                scale * 8,
-                scale * 20,
-                scale * 20,
-                alia_field(color, r),
-                alia_field(color, g),
-                alia_field(color, b)))
-        .content([&]() {
-            div(ctx, "letter-content", [&] {
-                span(ctx)
-                    .text(lazy_apply(
-                        [](char c) { return std::string(1, std::toupper(c)); },
-                        character))
-                    .classes("user-select-none");
-            });
+    auto style = printf(
+        ctx,
+        "font-size: min(%fvw, 42px); "
+        "width: %f%%; "
+        "padding-bottom: %f%%; "
+        "background-color: #%02x%02x%02x",
+        scale * 8,
+        scale * 20,
+        scale * 20,
+        alia_field(color, r),
+        alia_field(color, g),
+        alia_field(color, b));
+    element(ctx, "div").classes("letter").attr("style", style).content([&]() {
+        div(ctx, "letter-content", [&] {
+            span(ctx)
+                .text(lazy_apply(
+                    [](char c) { return std::string(1, std::toupper(c)); },
+                    character))
+                .classes("user-select-none");
         });
+    });
 }
 
 puzzle_state
@@ -87,9 +83,9 @@ process_key_press(
 }
 
 static rgb8 const palette[]
-    = {rgb8(0xec, 0xf0, 0xf1),
-       rgb8(0xaf, 0xd4, 0xec),
+    = {rgb8(0xaf, 0xd4, 0xec),
        rgb8(0xef, 0x8b, 0x81),
+       rgb8(0xec, 0xf0, 0xf1),
        rgb8(0x90, 0x9D, 0x9E),
        rgb8(0xff, 0xe3, 0x56),
        rgb8(0x4b, 0xdf, 0x8b)};
@@ -304,31 +300,36 @@ solving_ui(html::context ctx, readable<std::string> code)
 
     auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
 
-    div(ctx, "container-lg", [&] {
-        div(ctx, "row", [&] {
-            div(ctx, "col-12", [&] {
-                window_event_handler(ctx, "keydown", [&](emscripten::val v) {
-                    write_signal(
-                        state,
-                        process_key_press(
-                            read_signal(puzzle),
-                            read_signal(dict),
-                            read_signal(state),
-                            v["key"].as<std::string>()));
-                });
 
-                div(ctx, "letter-panel", [&] {
-                    for_each(ctx, letter_rows, [&](auto row) {
-                        letter_row(ctx, puzzle, row);
-                    });
+    div(ctx, "container-lg flexible", [&] {
+        div(ctx, "d-flex flex-column h-100 w-100", [&] {
+            window_event_handler(ctx, "keydown", [&](emscripten::val v) {
+                write_signal(
+                    state,
+                    process_key_press(
+                        read_signal(puzzle),
+                        read_signal(dict),
+                        read_signal(state),
+                        v["key"].as<std::string>()));
+            });
+
+            div(ctx, "letter-panel", [&] {
+                for_each(ctx, letter_rows, [&](auto row) {
+                    std::cout << "letter_row_invoker" << std::endl;
+                    invoke_pure_component(
+                        ctx,
+                        letter_row,
+                        puzzle,
+                        minimize_id_changes(ctx, row));
+                });
+            });
+
+            div(ctx, "footer", [&] {
+                div(ctx, "container", [&] {
+                    keyboard_ui(ctx, puzzle, dict, state, letter_rows);
                 });
             });
         });
     });
 
-    div(ctx, "footer", [&] {
-        div(ctx, "container", [&] {
-            keyboard_ui(ctx, puzzle, dict, state, letter_rows);
-        });
-    });
 }

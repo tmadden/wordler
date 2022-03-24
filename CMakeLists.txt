@@ -3,6 +3,8 @@ project(wordler)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_definitions(-DALIA_HTML_LOGGING)
+
 # Add dependencies.
 include(cmake/alia-html.cmake)
 include(cmake/cppcodec.cmake)

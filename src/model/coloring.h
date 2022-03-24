@@ -4,9 +4,9 @@
 
 enum letter_color
 {
-    NEUTRAL,
     CURSOR,
     ERROR,
+    NEUTRAL,
     INCORRECT,
     MISPLACED,
     CORRECT
@@ -16,6 +16,9 @@ struct colorful_letter
 {
     letter_color color;
     char letter;
+
+    auto
+    operator<=>(colorful_letter const&) const = default;
 };
 
 typedef std::vector<colorful_letter> colorful_text;

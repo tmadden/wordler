@@ -1,9 +1,7 @@
 cmake_minimum_required (VERSION 3.14)
 project(wordler)
 
-set(CMAKE_CXX_STANDARD 17)
-
-add_definitions(-DALIA_HTML_LOGGING)
+set(CMAKE_CXX_STANDARD 20)
 
 # Add dependencies.
 include(cmake/alia-html.cmake)

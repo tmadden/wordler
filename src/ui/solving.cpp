@@ -301,7 +301,7 @@ solving_ui(html::context ctx, readable<std::string> code)
     auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
 
 
-    div(ctx, "container-lg flexible", [&] {
+    div(ctx, "container-lg flexible p-2", [&] {
         div(ctx, "d-flex flex-column h-100 w-100", [&] {
             window_event_handler(ctx, "keydown", [&](emscripten::val v) {
                 write_signal(
@@ -325,9 +325,7 @@ solving_ui(html::context ctx, readable<std::string> code)
             });
 
             div(ctx, "footer", [&] {
-                div(ctx, "container", [&] {
-                    keyboard_ui(ctx, puzzle, dict, state, letter_rows);
-                });
+                keyboard_ui(ctx, puzzle, dict, state, letter_rows);
             });
         });
     });

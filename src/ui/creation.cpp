@@ -68,6 +68,10 @@ puzzle_code_modal(html::context ctx, Modal& modal, readable<std::string> code)
                  << url,
              copied <<= true));
 
+        bs::primary_button(ctx, "Share", callback([](std::string const& url) {
+                                             share_text("Wordler Puzzle", url);
+                                         }) << url);
+
         bs::secondary_button(ctx, "Close", actions::close(modal));
     });
 }

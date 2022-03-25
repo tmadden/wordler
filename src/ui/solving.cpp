@@ -91,7 +91,7 @@ outcome_modal(
             auto url = value("https://tmadden.github.io/wordler/#/");
             element(ctx, "a")
                 .attr("href", url)
-                .text("Create your own!")
+                .text("Create your own puzzle!")
                 .on("click", (actions::close(modal), callback([&]() {
                                   emscripten::val::global("window").set(
                                       "location", read_signal(url));

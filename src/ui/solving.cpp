@@ -15,6 +15,114 @@ using namespace alia;
 using namespace html;
 namespace bs = alia::html::bootstrap;
 
+std::string
+construct_outcome_text(
+    std::string const& code,
+    puzzle_definition const& puzzle,
+    puzzle_state const& state)
+{
+    std::stringstream out;
+
+    out << "https://tmadden.github.io/wordler/#/puzzle/" << code << "\n\n";
+
+    if (puzzle_is_solved(puzzle, state))
+        out << state.guesses.size();
+    else
+        out << "X";
+    out << " / " << puzzle.max_guesses;
+    out << "\n\n";
+
+    for (auto const& guess : score_guesses(puzzle, state.guesses))
+    {
+        for (auto const& letter : guess)
+        {
+            switch (letter.color)
+            {
+                case MISPLACED:
+                    out << "\xF0\x9F\x9F\xA8";
+                    break;
+                case CORRECT:
+                    out << "\xF0\x9F\x9F\xA9";
+                    break;
+                default:
+                    out << "\xE2\xAC\x9C";
+                    break;
+            }
+        }
+        out << "\n";
+    }
+
+    return out.str();
+}
+
+template<class Modal>
+void
+outcome_modal(
+    html::context ctx,
+    Modal& modal,
+    readable<std::string> code,
+    readable<puzzle_definition> puzzle,
+    readable<puzzle_state> state)
+{
+    auto is_victory = alia::apply(ctx, puzzle_is_solved, puzzle, state);
+
+    auto outcome_text
+        = apply(ctx, construct_outcome_text, code, puzzle, state);
+
+    modal.title(alia::conditional(is_victory, "Congratulations!", "Sorry!"));
+
+    modal.body([&] {
+        p(ctx, [&] {
+            alia_if(is_victory)
+            {
+                text(ctx, "You got it! ");
+            }
+            alia_end
+            text(ctx, "It was ");
+            b(ctx, alia_field(puzzle, the_word))
+                .classes("text-weight-bold text-monospace text-uppercase");
+            text(ctx, ".");
+        });
+
+        p(ctx, "Share your results below.");
+
+        p(ctx, [&] {
+            text(ctx, "Or... ");
+            auto url = value("https://tmadden.github.io/wordler/#/");
+            element(ctx, "a")
+                .attr("href", url)
+                .text("Create your own!")
+                .on("click", (actions::close(modal), callback([&]() {
+                                  emscripten::val::global("window").set(
+                                      "location", read_signal(url));
+                              })))
+                .classes("text-decoration-none");
+        });
+    });
+
+    modal.footer([&] {
+        auto copied = get_transient_state(ctx, false);
+
+        alia_if(copied)
+        {
+            p(ctx, "Copied!").classes("text-muted user-select-none");
+        }
+        alia_end
+
+        bs::primary_button(
+            ctx,
+            "Copy",
+            (callback([](std::string const& text) { copy_to_clipboard(text); })
+                 << outcome_text,
+             copied <<= true));
+
+        bs::primary_button(ctx, "Share", callback([](std::string const& text) {
+                                             share_text(
+                                                 "Wordler Results", text);
+                                         }) << outcome_text);
+    });
+}
+
 static rgb8 const palette[]
     = {rgb8(0xaf, 0xd4, 0xec),
        rgb8(0xef, 0x8b, 0x81),
@@ -54,6 +162,34 @@ letter_display(
     });
 }
 
+void
+letter_row(
+    html::context ctx,
+    readable<puzzle_definition> puzzle,
+    readable<colorful_text> row)
+{
+    div(ctx, "letter-row", [&] {
+        for_each(ctx, row, [&](auto letter) {
+            letter_display(
+                ctx,
+                apply(
+                    ctx,
+                    [](puzzle_definition const& puzzle) {
+                        size_t word_length = puzzle.the_word.length();
+                        return 7.0 / std::max(word_length, size_t(7));
+                    },
+                    puzzle),
+                smooth(
+                    ctx,
+                    lazy_apply(
+                        [](auto color) { return palette[color]; },
+                        alia_field(letter, color)),
+                    animated_transition{ease_in_out_curve, 400}),
+                alia_field(letter, letter));
+        });
+    });
+}
+
 puzzle_state
 process_key_press(
     puzzle_definition const& puzzle,
@@ -89,49 +225,6 @@ process_key_press(
             state.active_guess.pop_back();
     }
     return state;
-}
-
-void
-letter_row(
-    html::context ctx,
-    readable<puzzle_definition> puzzle,
-    readable<colorful_text> row)
-{
-    div(ctx, "letter-row", [&] {
-        for_each(ctx, row, [&](auto letter) {
-            letter_display(
-                ctx,
-                apply(
-                    ctx,
-                    [](puzzle_definition const& puzzle) {
-                        size_t word_length = puzzle.the_word.length();
-                        return 7.0 / std::max(word_length, size_t(7));
-                    },
-                    puzzle),
-                smooth(
-                    ctx,
-                    lazy_apply(
-                        [](auto color) { return palette[color]; },
-                        alia_field(letter, color)),
-                    animated_transition{ease_in_out_curve, 400}),
-                alia_field(letter, letter));
-        });
-    });
-}
-
-letter_color
-extract_key_color(std::vector<colorful_text> const& letter_rows, char letter)
-{
-    letter_color color = NEUTRAL;
-    for (auto const& row : letter_rows)
-    {
-        for (auto const& cl : row)
-        {
-            if (cl.letter == letter && cl.color > color)
-                color = cl.color;
-        }
-    }
-    return color;
 }
 
 template<class Content>
@@ -272,12 +365,12 @@ solving_ui(html::context ctx, readable<std::string> code)
     // Construct the signal for our puzzle state...
     // First, create a binding to the raw, JSON state in local storage.
     auto json_state = get_local_state(ctx, code);
-    // Pass that through a two-way serializer/deserializer to convert it to our
-    // native C++ representation.
+    // Pass that through a two-way serializer/deserializer to convert it to
+    // our native C++ representation.
     auto native_state = duplex_apply(
         ctx, json_to_puzzle_state, puzzle_state_to_json, json_state);
-    // And finally, add a default value (of default-initialized state) for when
-    // the raw JSON doesn't exist yet.
+    // And finally, add a default value (of default-initialized state) for
+    // when the raw JSON doesn't exist yet.
     auto state
         = add_default(native_state, default_initialized<puzzle_state>());
 
@@ -302,8 +395,17 @@ solving_ui(html::context ctx, readable<std::string> code)
                 v["key"].as<std::string>()));
     });
 
+    // Do the main body of the app.
     div(ctx, "container-lg flexible p-2", [&] {
         div(ctx, "d-flex flex-column h-100 w-100", [&] {
+            // Do the intro message.
+            p(ctx, [&] {
+                text(ctx, "Someone has sent you a personalized ");
+                link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
+                    .class_("text-primary");
+                text(ctx, " puzzle!");
+            }).classes("mt-3");
+
             // Do the guess rows.
             auto letter_rows = apply(
                 ctx, add_unfinished_rows, scored_guesses, puzzle, state);
@@ -316,6 +418,7 @@ solving_ui(html::context ctx, readable<std::string> code)
                         minimize_id_changes(ctx, row));
                 });
             });
+
             // Do the keyboard.
             div(ctx, "footer", [&] {
                 keyboard_ui(ctx, puzzle, dict, state, scored_guesses);
@@ -323,4 +426,17 @@ solving_ui(html::context ctx, readable<std::string> code)
         });
     });
 
+    // If the game is over, do the outcome modal.
+    alia_if(
+        apply(ctx, puzzle_is_solved, puzzle, state)
+        || apply(ctx, out_of_guesses, puzzle, state))
+    {
+        auto modal = bs::modal(ctx, [&](auto& modal) {
+            outcome_modal(ctx, modal, code, puzzle, state);
+        });
+        modal.class_("fade");
+        // Activate the modal as soon as this block is activated.
+        on_activate(ctx, actions::activate(modal));
+    }
+    alia_end
 }

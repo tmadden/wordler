@@ -12,6 +12,9 @@ using namespace alia;
 void
 copy_to_clipboard(std::string const& text);
 
+void
+share_text(std::string const& title, std::string const& text);
+
 struct targeted_window_callback : html::detail::window_callback
 {
     component_identity identity;

@@ -167,7 +167,7 @@ creation_ui(html::context ctx)
                     link(
                         ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
                         .class_("text-primary");
-                    text(ctx, "-style puzzles!");
+                    text(ctx, " puzzles!");
                 }).classes("mt-5");
 
                 creation_form(ctx);

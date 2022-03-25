@@ -11,6 +11,23 @@ copy_to_clipboard(std::string const& text)
         text.c_str());
 }
 
+void
+share_text(std::string const& title, std::string const& text)
+{
+    EM_ASM(
+        {
+            if (navigator.share)
+            {
+                navigator.share({
+                    title : Module['UTF8ToString']($0),
+                    text : Module['UTF8ToString']($1)
+                });
+            }
+        },
+        title.c_str(),
+        text.c_str());
+}
+
 struct dynamic_storage_signal_data
 {
     captured_id key_id;
@@ -41,7 +58,6 @@ get_storage_state(
                     if (event["key"].as<std::string>()
                         == data->static_data.key)
                     {
-                        std::cout << "storage event!" << std::endl;
                         data->static_data.value.set(
                             event["newValue"].as<std::string>());
                         refresh_system(*sys);

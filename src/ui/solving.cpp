@@ -15,6 +15,14 @@ using namespace alia;
 using namespace html;
 namespace bs = alia::html::bootstrap;
 
+static rgb8 const palette[]
+    = {rgb8(0xaf, 0xd4, 0xec),
+       rgb8(0xef, 0x8b, 0x81),
+       rgb8(0xec, 0xf0, 0xf1),
+       rgb8(0x90, 0x9D, 0x9E),
+       rgb8(0xff, 0xe3, 0x56),
+       rgb8(0x4b, 0xdf, 0x8b)};
+
 void
 letter_display(
     html::context ctx,
@@ -28,12 +36,13 @@ letter_display(
         "width: %f%%; "
         "padding-bottom: %f%%; "
         "background-color: #%02x%02x%02x",
-        scale * 8,
-        scale * 20,
-        scale * 20,
+        scale * 6,
+        scale * 15,
+        scale * 15,
         alia_field(color, r),
         alia_field(color, g),
         alia_field(color, b));
+
     element(ctx, "div").classes("letter").attr("style", style).content([&]() {
         div(ctx, "letter-content", [&] {
             span(ctx)
@@ -82,14 +91,6 @@ process_key_press(
     return state;
 }
 
-static rgb8 const palette[]
-    = {rgb8(0xaf, 0xd4, 0xec),
-       rgb8(0xef, 0x8b, 0x81),
-       rgb8(0xec, 0xf0, 0xf1),
-       rgb8(0x90, 0x9D, 0x9E),
-       rgb8(0xff, 0xe3, 0x56),
-       rgb8(0x4b, 0xdf, 0x8b)};
-
 void
 letter_row(
     html::context ctx,
@@ -104,7 +105,7 @@ letter_row(
                     ctx,
                     [](puzzle_definition const& puzzle) {
                         size_t word_length = puzzle.the_word.length();
-                        return 5.0 / std::max(word_length, size_t(5));
+                        return 7.0 / std::max(word_length, size_t(7));
                     },
                     puzzle),
                 smooth(
@@ -133,19 +134,17 @@ extract_key_color(std::vector<colorful_text> const& letter_rows, char letter)
     return color;
 }
 
+template<class Content>
 void
-letter_key(
+keyboard_key(
     html::context ctx,
     readable<puzzle_definition> puzzle,
     readable<dictionary> dict,
     duplex<puzzle_state> state,
-    readable<std::vector<colorful_text>> letter_rows,
-    char letter)
+    readable<rgb8> color,
+    std::string const& code,
+    Content&& content)
 {
-    auto color = lazy_apply(
-        [](auto color) { return palette[color]; },
-        apply(ctx, extract_key_color, letter_rows, value(letter)));
-
     element(ctx, "div")
         .classes("key")
         .attr(
@@ -156,15 +155,8 @@ letter_key(
                 alia_field(color, r),
                 alia_field(color, g),
                 alia_field(color, b)))
-        .content([&]() {
-            div(ctx, "key-content", [&] {
-                span(ctx)
-                    .text(lazy_apply(
-                        [](char c) { return std::string(1, std::toupper(c)); },
-                        value(letter)))
-                    .classes("user-select-none");
-            });
-        })
+        .content(
+            [&]() { div(ctx, "key-content", std::forward<Content>(content)); })
         .handler("click", [&](emscripten::val v) {
             write_signal(
                 state,
@@ -172,7 +164,7 @@ letter_key(
                     read_signal(puzzle),
                     read_signal(dict),
                     read_signal(state),
-                    std::string(1, letter)));
+                    code));
         });
 }
 
@@ -182,10 +174,30 @@ keyboard_ui(
     readable<puzzle_definition> puzzle,
     readable<dictionary> dict,
     duplex<puzzle_state> state,
-    readable<std::vector<colorful_text>> letter_rows)
+    readable<std::vector<colorful_text>> scored_guesses)
 {
+    auto colors = apply(ctx, extract_key_colors, scored_guesses);
+
     auto do_letter = [&](char letter) {
-        letter_key(ctx, puzzle, dict, state, letter_rows, letter);
+        keyboard_key(
+            ctx,
+            puzzle,
+            dict,
+            state,
+            smooth(
+                ctx,
+                lazy_apply(
+                    [](auto color) { return palette[color]; },
+                    colors[letter - 'a']),
+                animated_transition{ease_in_out_curve, 400}),
+            std::string(1, letter),
+            [&] {
+                span(ctx)
+                    .text(lazy_apply(
+                        [](char c) { return std::string(1, std::toupper(c)); },
+                        value(letter)))
+                    .classes("user-select-none");
+            });
     };
 
     div(ctx, "keyboard", [&] {
@@ -201,6 +213,7 @@ keyboard_ui(
             do_letter('o');
             do_letter('p');
         });
+
         div(ctx, "keyboard-row", [&] {
             do_letter('a');
             do_letter('s');
@@ -212,33 +225,19 @@ keyboard_ui(
             do_letter('k');
             do_letter('l');
         });
+
         div(ctx, "keyboard-row", [&] {
-            element(ctx, "div")
-                .classes("key")
-                .attr(
-                    "style",
-                    printf(
-                        ctx,
-                        "background-color: #%02x%02x%02x",
-                        value(palette[NEUTRAL].r),
-                        value(palette[NEUTRAL].g),
-                        value(palette[NEUTRAL].b)))
-                .content([&]() {
-                    div(ctx, "key-content", [&] {
-                        span(ctx)
-                            .classes(
-                                "material-icons-outlined user-select-none")
-                            .text("keyboard_return");
-                    });
-                })
-                .handler("click", [&](emscripten::val v) {
-                    write_signal(
-                        state,
-                        process_key_press(
-                            read_signal(puzzle),
-                            read_signal(dict),
-                            read_signal(state),
-                            "Enter"));
+            keyboard_key(
+                ctx,
+                puzzle,
+                dict,
+                state,
+                value(palette[NEUTRAL]),
+                "Enter",
+                [&] {
+                    span(ctx)
+                        .classes("material-icons-outlined user-select-none")
+                        .text("keyboard_return");
                 });
 
             do_letter('z');
@@ -249,31 +248,17 @@ keyboard_ui(
             do_letter('n');
             do_letter('m');
 
-            element(ctx, "div")
-                .classes("key")
-                .attr(
-                    "style",
-                    printf(
-                        ctx,
-                        "background-color: #%02x%02x%02x",
-                        value(palette[NEUTRAL].r),
-                        value(palette[NEUTRAL].g),
-                        value(palette[NEUTRAL].b)))
-                .content([&]() {
-                    div(ctx, "key-content", [&] {
-                        span(ctx)
-                            .classes("material-icons user-select-none")
-                            .text("backspace");
-                    });
-                })
-                .handler("click", [&](emscripten::val v) {
-                    write_signal(
-                        state,
-                        process_key_press(
-                            read_signal(puzzle),
-                            read_signal(dict),
-                            read_signal(state),
-                            "Backspace"));
+            keyboard_key(
+                ctx,
+                puzzle,
+                dict,
+                state,
+                value(palette[NEUTRAL]),
+                "Backspace",
+                [&] {
+                    span(ctx)
+                        .classes("material-icons user-select-none")
+                        .text("backspace");
                 });
         });
     });
@@ -296,26 +281,34 @@ solving_ui(html::context ctx, readable<std::string> code)
     auto state
         = add_default(native_state, default_initialized<puzzle_state>());
 
+    // Fetch the dictionary for this size.
     auto dict = fetch_dictionary(ctx, size(alia_field(puzzle, the_word)));
 
-    auto letter_rows = apply(ctx, make_letter_rows, puzzle, state);
+    // Score the guesses.
+    auto scored_guesses = apply(
+        ctx,
+        score_guesses,
+        puzzle,
+        minimize_id_changes(ctx, alia_field(state, guesses)));
 
+    // Handle keyboard events.
+    window_event_handler(ctx, "keydown", [&](emscripten::val v) {
+        write_signal(
+            state,
+            process_key_press(
+                read_signal(puzzle),
+                read_signal(dict),
+                read_signal(state),
+                v["key"].as<std::string>()));
+    });
 
     div(ctx, "container-lg flexible p-2", [&] {
         div(ctx, "d-flex flex-column h-100 w-100", [&] {
-            window_event_handler(ctx, "keydown", [&](emscripten::val v) {
-                write_signal(
-                    state,
-                    process_key_press(
-                        read_signal(puzzle),
-                        read_signal(dict),
-                        read_signal(state),
-                        v["key"].as<std::string>()));
-            });
-
+            // Do the guess rows.
+            auto letter_rows = apply(
+                ctx, add_unfinished_rows, scored_guesses, puzzle, state);
             div(ctx, "letter-panel", [&] {
                 for_each(ctx, letter_rows, [&](auto row) {
-                    std::cout << "letter_row_invoker" << std::endl;
                     invoke_pure_component(
                         ctx,
                         letter_row,
@@ -323,9 +316,9 @@ solving_ui(html::context ctx, readable<std::string> code)
                         minimize_id_changes(ctx, row));
                 });
             });
-
+            // Do the keyboard.
             div(ctx, "footer", [&] {
-                keyboard_ui(ctx, puzzle, dict, state, letter_rows);
+                keyboard_ui(ctx, puzzle, dict, state, scored_guesses);
             });
         });
     });

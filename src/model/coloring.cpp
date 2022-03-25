@@ -1,7 +1,9 @@
 #include "model/coloring.h"
 
+#include <iostream>
+
 colorful_text
-color_guess(puzzle_definition const& puzzle, std::string const& guess)
+score_guess(puzzle_definition const& puzzle, std::string const& guess)
 {
     // Do a histogram of all the letters in 'the word'.
     int letter_counts[26] = {0};
@@ -39,6 +41,16 @@ color_guess(puzzle_definition const& puzzle, std::string const& guess)
     return text;
 }
 
+std::vector<colorful_text>
+score_guesses(
+    puzzle_definition const& puzzle, std::vector<std::string> const& guesses)
+{
+    std::vector<colorful_text> rows;
+    for (auto const& guess : guesses)
+        rows.push_back(score_guess(puzzle, guess));
+    return rows;
+}
+
 colorful_text
 empty_row(puzzle_definition const& puzzle)
 {
@@ -63,14 +75,35 @@ color_active_guess(puzzle_definition const& puzzle, puzzle_state const& state)
 }
 
 std::vector<colorful_text>
-make_letter_rows(puzzle_definition const& puzzle, puzzle_state const& state)
+add_unfinished_rows(
+    std::vector<colorful_text> const& guesses,
+    puzzle_definition const& puzzle,
+    puzzle_state const& state)
 {
-    std::vector<colorful_text> rows;
-    for (auto const& guess : state.guesses)
-        rows.push_back(color_guess(puzzle, guess));
-    if (rows.size() < puzzle.max_guesses)
-        rows.push_back(color_active_guess(puzzle, state));
-    while (rows.size() < puzzle.max_guesses)
-        rows.push_back(empty_row(puzzle));
+    std::vector<colorful_text> rows = guesses;
+    if (!puzzle_is_solved(puzzle, state))
+    {
+        if (rows.size() < puzzle.max_guesses)
+            rows.push_back(color_active_guess(puzzle, state));
+        while (rows.size() < puzzle.max_guesses)
+            rows.push_back(empty_row(puzzle));
+    }
     return rows;
+}
+
+std::array<letter_color, 26>
+extract_key_colors(std::vector<colorful_text> const& scored_guesses)
+{
+    std::array<letter_color, 26> colors;
+    colors.fill(NEUTRAL);
+    for (auto const& guess : scored_guesses)
+    {
+        for (auto const& cl : guess)
+        {
+            auto& color = colors[cl.letter - 'a'];
+            if (cl.color > color)
+                color = cl.color;
+        }
+    }
+    return colors;
 }

@@ -17,6 +17,12 @@ struct puzzle_state
     bool tried_an_invalid_word = false;
 };
 
+bool
+puzzle_is_solved(puzzle_definition const& puzzle, puzzle_state const& state);
+
+bool
+out_of_guesses(puzzle_definition const& puzzle, puzzle_state const& state);
+
 std::string
 puzzle_state_to_json(puzzle_state const& state);
 

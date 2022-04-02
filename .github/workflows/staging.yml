@@ -1,15 +1,16 @@
-name: Deployment
+name: Staging
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
 
 env:
   EM_VERSION: 2.0.34
   EM_CACHE_FOLDER: 'emsdk-cache'
 
 jobs:
-  deployment:
+  gh-pages:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -32,6 +33,7 @@ jobs:
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@4.1.0
         with:
+          target-folder: staging
           branch: gh-pages
           folder: build/deploy
           single-commit: true

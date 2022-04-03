@@ -29,6 +29,10 @@ jobs:
           cd build
           emcmake cmake -DCMAKE_BUILD_TYPE=Release ..
           make -j
+      - name: Test
+        run: |
+          cd build
+          ctest
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.2.5
         with:

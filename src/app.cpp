@@ -1,8 +1,8 @@
 #include <alia/html.hpp>
 #include <alia/html/routing.hpp>
 
-#include "ui/creation.h"
-#include "ui/solving.h"
+#include <wordler/ui/creation.h>
+#include <wordler/ui/solving.h>
 
 using namespace alia;
 using namespace html;

@@ -8,6 +8,9 @@ struct puzzle_definition
     std::string the_word;
     int max_guesses;
     bool disable_dict_warning;
+
+    bool
+    operator==(puzzle_definition const&) const = default;
 };
 
 struct puzzle_state

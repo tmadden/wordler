@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+// TYPES
+
 struct puzzle_definition
 {
     std::string the_word;
@@ -20,11 +22,15 @@ struct puzzle_state
     bool tried_an_invalid_word = false;
 };
 
+// QUERY FUNCTIONS
+
 bool
 puzzle_is_solved(puzzle_definition const& puzzle, puzzle_state const& state);
 
 bool
 out_of_guesses(puzzle_definition const& puzzle, puzzle_state const& state);
+
+// JSON I/O
 
 std::string
 puzzle_state_to_json(puzzle_state const& state);

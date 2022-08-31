@@ -135,6 +135,18 @@ creation_form(html::context ctx)
             alia_end
         });
 
+        auto author = get_local_state(ctx, "author");
+
+        div(ctx, "form-group", [&]() {
+            label(ctx, "Sign your work?")
+                .classes("form-label mt-4")
+                .attr("for", "author-input");
+            input(ctx, author)
+                .classes("form-control")
+                .attr("id", "author-input")
+                .attr("type", "text");
+        });
+
         {
             auto modal = bs::modal(ctx, [&](auto& modal) {
                 auto code = apply(
@@ -145,7 +157,8 @@ creation_form(html::context ctx)
                         ALIA_AGGREGATOR(puzzle_definition),
                         trimmed_word,
                         max_guesses,
-                        value(false)));
+                        value(false),
+                        author));
                 puzzle_code_modal(ctx, modal, code);
             });
             modal.class_("fade");

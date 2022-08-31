@@ -39,6 +39,7 @@ target_include_directories(wordler PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${cereal_SOURCE_DIR}/include)
 add_executable(app "src/app.cpp")
+target_compile_options(app PUBLIC "-sENVIRONMENT=web")
 target_link_libraries(app wordler)
 set_target_properties(app PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${deploy_dir})
@@ -56,4 +57,4 @@ target_include_directories(tests PUBLIC
     ${Catch2_SOURCE_DIR}/include)
 target_link_libraries(tests PUBLIC wordler Catch2::Catch2WithMain)
 enable_testing()
-add_test(NAME unit_tests COMMAND tests)
+add_test(NAME unit_tests COMMAND node ${CMAKE_CURRENT_BINARY_DIR}/tests.js)

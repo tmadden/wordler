@@ -23,6 +23,8 @@ construct_outcome_text(
 {
     std::stringstream out;
 
+    if (!puzzle.author.empty())
+        out << "A Wordle by " << puzzle.author << "\n";
     out << "https://tmadden.github.io/wordler/#/puzzle/" << code << "\n\n";
 
     if (puzzle_is_solved(puzzle, state))
@@ -400,10 +402,24 @@ solving_ui(html::context ctx, readable<std::string> code)
         div(ctx, "d-flex flex-column h-100 w-100", [&] {
             // Do the intro message.
             p(ctx, [&] {
-                text(ctx, "Someone has sent you a personalized ");
-                link(ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
-                    .class_("text-primary");
-                text(ctx, " puzzle!");
+                alia_if(is_empty(alia_field(puzzle, author)))
+                {
+                    text(ctx, "Someone has sent you a personalized ");
+                    link(
+                        ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
+                        .class_("text-primary");
+                    text(ctx, " puzzle!");
+                }
+                alia_else
+                {
+                    text(ctx, "A ");
+                    link(
+                        ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
+                        .class_("text-primary");
+                    text(ctx, " puzzle by ");
+                    text(ctx, alia_field(puzzle, author));
+                }
+                alia_end
             }).classes("mt-3");
 
             // Do the guess rows.

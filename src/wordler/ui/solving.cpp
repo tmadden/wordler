@@ -416,7 +416,7 @@ solving_ui(html::context ctx, readable<std::string> code)
                     link(
                         ctx, "Wordle", "https://www.nytimes.com/games/wordle/")
                         .class_("text-primary");
-                    text(ctx, " puzzle by ");
+                    text(ctx, " by ");
                     text(ctx, alia_field(puzzle, author));
                 }
                 alia_end

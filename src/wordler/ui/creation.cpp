@@ -35,9 +35,15 @@ trim(std::string const& str)
 
 template<class Modal>
 void
-puzzle_code_modal(html::context ctx, Modal& modal, readable<std::string> code)
+puzzle_code_modal(
+    html::context ctx, Modal& modal, readable<puzzle_definition> puzzle)
 {
-    modal.title("Your Puzzle");
+    modal.title(conditional(
+        is_empty(alia_field(puzzle, author)),
+        value("Your Puzzle"),
+        "A Wordle by " + alia_field(puzzle, author)));
+
+    auto code = apply(ctx, generate_puzzle_code, puzzle);
 
     auto url = "https://tmadden.github.io/wordler/#/puzzle/" + code;
 
@@ -149,17 +155,14 @@ creation_form(html::context ctx)
 
         {
             auto modal = bs::modal(ctx, [&](auto& modal) {
-                auto code = apply(
+                auto puzzle = apply(
                     ctx,
-                    generate_puzzle_code,
-                    apply(
-                        ctx,
-                        ALIA_AGGREGATOR(puzzle_definition),
-                        trimmed_word,
-                        max_guesses,
-                        value(false),
-                        author));
-                puzzle_code_modal(ctx, modal, code);
+                    ALIA_AGGREGATOR(puzzle_definition),
+                    trimmed_word,
+                    max_guesses,
+                    value(false),
+                    author);
+                puzzle_code_modal(ctx, modal, puzzle);
             });
             modal.class_("fade");
             bs::primary_button(

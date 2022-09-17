@@ -2,6 +2,7 @@
 #include <alia/html/routing.hpp>
 
 #include <wordler/ui/creation.h>
+#include <wordler/ui/decoder.h>
 #include <wordler/ui/solving.h>
 
 using namespace alia;
@@ -15,8 +16,8 @@ app_ui(html::context ctx)
     placeholder_root(ctx, "app-content", [&] {
         router(ctx)
             .route("/", [&] { creation_ui(ctx); })
-            .route(
-                "/puzzle/{}", [&](auto puzzle) { solving_ui(ctx, puzzle); });
+            .route("/puzzle/{}", [&](auto puzzle) { solving_ui(ctx, puzzle); })
+            .route("/decoder", [&]() { decoder_ui(ctx); });
     });
 }
 

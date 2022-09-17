@@ -15,24 +15,6 @@ namespace bs = alia::html::bootstrap;
 
 namespace {
 
-bool
-is_alpha_only(std::string const& word)
-{
-    return std::all_of(word.begin(), word.end(), ALIA_LAMBDIFY(std::isalpha));
-}
-
-std::string
-trim(std::string const& str)
-{
-    auto const begin = str.find_first_not_of(" ");
-    if (begin == std::string::npos)
-        return "";
-
-    auto const end = str.find_last_not_of(" ");
-
-    return str.substr(begin, end - begin + 1);
-}
-
 template<class Modal>
 void
 puzzle_code_modal(

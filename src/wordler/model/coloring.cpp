@@ -3,23 +3,23 @@
 #include <iostream>
 
 colorful_text
-score_guess(puzzle_definition const& puzzle, std::string const& guess)
+score_guess(std::string const& the_word, std::string const& guess)
 {
     // Do a histogram of all the letters in 'the word'.
     int letter_counts[26] = {0};
-    for (char letter : puzzle.the_word)
+    for (char letter : the_word)
         ++letter_counts[letter - 'a'];
 
     // Now go through and mark all the correct letters in the guess.
     // (And, importantly, also remove them from the histogram.)
     colorful_text text;
-    size_t word_length = puzzle.the_word.length();
+    size_t word_length = the_word.length();
     text.reserve(word_length);
     for (size_t i = 0; i != word_length; ++i)
     {
         char letter = guess[i];
         letter_color color = INCORRECT;
-        if (letter == puzzle.the_word[i])
+        if (letter == the_word[i])
         {
             color = CORRECT;
             --letter_counts[letter - 'a'];
@@ -47,7 +47,7 @@ score_guesses(
 {
     std::vector<colorful_text> rows;
     for (auto const& guess : guesses)
-        rows.push_back(score_guess(puzzle, guess));
+        rows.push_back(score_guess(puzzle.the_word, guess));
     return rows;
 }
 
@@ -106,4 +106,30 @@ extract_key_colors(std::vector<colorful_text> const& scored_guesses)
         }
     }
     return colors;
+}
+
+std::vector<std::string>
+decode_score(
+    std::string const& the_word,
+    dictionary const& dict,
+    std::vector<letter_color> const& score)
+{
+    size_t const word_size = the_word.size();
+    if (score.size() != word_size)
+        return std::vector<std::string>();
+
+    std::vector<std::string> possible_guesses;
+    for (auto const& guess : dict)
+    {
+        auto const full_score = score_guess(the_word, guess);
+        bool match = true;
+        for (size_t i = 0; i != word_size; ++i)
+        {
+            if (full_score[i].color != score[i])
+                match = false;
+        }
+        if (match)
+            possible_guesses.push_back(guess);
+    }
+    return possible_guesses;
 }

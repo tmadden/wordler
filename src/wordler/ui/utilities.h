@@ -1,13 +1,30 @@
 #pragma once
 
+#include <algorithm>
+#include <cctype>
+
 #include <emscripten/html5.h>
 #include <emscripten/val.h>
 
 #include <alia/html.hpp>
 
+#include <alia/html/bootstrap/modals.hpp>
+
 using namespace alia;
 
+inline bool
+is_alpha_only(std::string const& word)
+{
+    return std::all_of(word.begin(), word.end(), ALIA_LAMBDIFY(std::isalpha));
+}
+
+std::string
+trim(std::string const& str);
+
 // Candidate code for incorporation into alia/HTML...
+
+html::element_handle
+textarea(html::context ctx, duplex<std::string> value);
 
 void
 copy_to_clipboard(std::string const& text);
@@ -180,3 +197,9 @@ minimize_id_changes(context ctx, Signal x)
     get_cached_data(ctx, &data);
     return minimize_id_changes(ctx, data, std::move(x));
 }
+
+html::bootstrap::modal_handle
+scrollable_modal(
+    html::context ctx,
+    alia::function_view<void(html::bootstrap::internal_modal_handle&)>
+        content);

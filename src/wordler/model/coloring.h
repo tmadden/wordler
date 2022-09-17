@@ -3,6 +3,7 @@
 #include <array>
 #include <compare>
 
+#include <wordler/model/dictionaries.h>
 #include <wordler/model/puzzle.h>
 
 // This file provides functions for coloring the puzzle boxes.
@@ -30,7 +31,7 @@ typedef std::vector<colorful_letter> colorful_text;
 
 // Score a guess.
 colorful_text
-score_guess(puzzle_definition const& puzzle, std::string const& guesses);
+score_guess(std::string const& the_word, std::string const& guesses);
 
 // Score multiple guesses.
 std::vector<colorful_text>
@@ -48,3 +49,10 @@ add_unfinished_rows(
 // letter keys should be on the keyboard.
 std::array<letter_color, 26>
 extract_key_colors(std::vector<colorful_text> const& scored_guesses);
+
+// Determine what guess words could've generated a given score.
+std::vector<std::string>
+decode_score(
+    std::string const& the_word,
+    dictionary const& dict,
+    std::vector<letter_color> const& score);

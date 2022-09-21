@@ -122,7 +122,14 @@ decoder_form(html::context ctx)
     element(ctx, "form").content([&]() {
         auto word_input = get_state(ctx, "");
 
-        auto the_word = apply(ctx, trim, word_input);
+        auto the_word = apply(
+            ctx,
+            [](std::string s) {
+                for (char& c : s)
+                    c = std::tolower(c);
+                return s;
+            },
+            apply(ctx, trim, word_input));
 
         auto word_is_letters = apply(ctx, is_alpha_only, the_word);
         auto word_is_valid = word_is_letters && !is_empty(the_word);
